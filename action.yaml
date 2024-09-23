@@ -1,9 +1,12 @@
 name: "Create Pull Request Alert"
 author: "Your Name"
-description: "Create a pull request alert based on inputs"
+description: "Create a pull request alert using GitHub REST API"
 branding:
   color: green
   icon: git-pull-request
+permissions:
+  pull-requests: write  # Ensure write access for pull requests
+  contents: write       # Ensure write access to contents if needed
 inputs:
   repository:
     description: "Target repository for creating the pull request"
@@ -28,14 +31,18 @@ runs:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
-    - name: Create Pull Request
+    - name: Create Pull Request via GitHub API
       env:
-        GH_TOKEN: ${{ github.token }}  # Use the built-in GitHub Actions token
+        GITHUB_TOKEN: ${{ github.token }}  # Use the GitHub Actions built-in token
       run: |
-        gh pr create \
-          --repo ${{ inputs.repository }} \
-          --base ${{ inputs.base-branch }} \
-          --head ${{ inputs.head-branch }} \
-          --title "${{ inputs.pr-title }}" \
-          --body "${{ inputs.pr-body }}"
+        curl -X POST \
+        -H "Authorization: token ${{ github.token }}" \
+        -H "Accept: application/vnd.github.v3+json" \
+        https://api.github.com/repos/${{ inputs.repository }}/pulls \
+        -d '{
+          "title": "${{ inputs.pr-title }}",
+          "head": "${{ inputs.head-branch }}",
+          "base": "${{ inputs.base-branch }}",
+          "body": "${{ inputs.pr-body }}"
+        }'
       shell: bash
