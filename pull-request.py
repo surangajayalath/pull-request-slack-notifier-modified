@@ -470,6 +470,22 @@ def main():
             state=pull_request_state,
         )
 
+def send_slack_notification(pr_url):
+    """Send a notification to Slack with the pull request URL."""
+    slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
+    if not slack_webhook_url:
+        print("SLACK_WEBHOOK_URL is not set, skipping Slack notification.")
+        return
+
+    message = {
+        "text": f"A new pull request has been created: {pr_url}"
+    }
+    response = requests.post(slack_webhook_url, json=message)
+    if response.status_code != 200:
+        print(f"Failed to send Slack notification: {response.status_code} {response.text}")
+    else:
+        print("Slack notification sent successfully.")
+
 
 if __name__ == "__main__":
     print("==========================================================================")
