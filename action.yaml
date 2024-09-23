@@ -33,7 +33,7 @@ runs:
 
     - name: Create Pull Request
       env:
-        GITHUB_TOKEN: ${{ inputs.secret }}  # Directly setting the token in the environment
+        GH_TOKEN: ${{ inputs.secret }}  # Directly setting the token in the environment
       run: |
         gh pr create \
           --repo ${{ inputs.repository }} \
