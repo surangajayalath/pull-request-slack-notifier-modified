@@ -1,48 +1,38 @@
 name: "Create Pull Request Alert"
 author: "Your Name"
-description: "Create a pull request alert using GitHub REST API"
+description: "Automatically create a pull request with the main branch on new branch changes"
 branding:
   color: green
   icon: git-pull-request
 permissions:
   pull-requests: write  # Ensure write access for pull requests
   contents: write       # Ensure write access to contents if needed
-inputs:
-  repository:
-    description: "Target repository for creating the pull request"
-    required: true
-  base-branch:
-    description: "Base branch to create pull request against (e.g., main)"
-    required: true
-  head-branch:
-    description: "Branch from which the pull request will be created"
-    required: true
-  pr-title:
-    description: "Title of the pull request"
-    required: true
-  pr-body:
-    description: "Body content of the pull request"
-    required: false
-    default: "This is an automated pull request"
 
-runs:
-  using: "composite"
-  steps:
-    - name: Checkout Repository
-      uses: actions/checkout@v3
+on:
+  push:
+    branches:
+      - "**"  # Trigger on push to any branch except 'main'
 
-    - name: Create Pull Request via GitHub API
-      env:
-        GITHUB_TOKEN: ${{ github.token }}  # Use the GitHub Actions built-in token
-      run: |
-        curl -X POST \
-        -H "Authorization: token ${{ github.token }}" \
-        -H "Accept: application/vnd.github.v3+json" \
-        https://api.github.com/repos/${{ inputs.repository }}/pulls \
-        -d '{
-          "title": "${{ inputs.pr-title }}",
-          "head": "${{ inputs.head-branch }}",
-          "base": "${{ inputs.base-branch }}",
-          "body": "${{ inputs.pr-body }}"
-        }'
-      shell: bash
+jobs:
+  create-pr-alert:
+    runs-on: ubuntu-latest
+    if: github.ref != 'refs/heads/main'  # Avoid creating PR when pushing to the main branch
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Create Pull Request via GitHub API
+        env:
+          GITHUB_TOKEN: ${{ github.token }}  # Use the GitHub Actions built-in token
+        run: |
+          curl -X POST \
+          -H "Authorization: token $GITHUB_TOKEN" \
+          -H "Accept: application/vnd.github.v3+json" \
+          https://api.github.com/repos/${{ github.repository }}/pulls \
+          -d '{
+            "title": "Automated Pull Request for changes from ${{ github.ref_name }}",
+            "head": "${{ github.ref_name }}",
+            "base": "main",
+            "body": "This is an automated pull request for merging changes from ${{ github.ref_name }} into the main branch."
+          }'
+        shell: bash
