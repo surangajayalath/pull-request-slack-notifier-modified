@@ -1,42 +1,47 @@
-name: "Auto Create Pull Request on Main Branch Push"
-on:
-  push:
-    branches:
-      - main
+name: "Create Pull Request Alert"
+author: "Your Name"
+description: "Create a pull request alert based on inputs"
+branding:
+  color: green
+  icon: git-pull-request
+inputs:
+  repository:
+    description: "Target repository for creating the pull request"
+    required: true
+  base-branch:
+    description: "Base branch to create pull request against (e.g., main)"
+    required: true
+  head-branch:
+    description: "Branch from which the pull request will be created"
+    required: true
+  pr-title:
+    description: "Title of the pull request"
+    required: true
+  pr-body:
+    description: "Body content of the pull request"
+    required: false
+    default: "This is an automated pull request"
+  github-token:
+    description: "GitHub Personal Access Token for authentication"
+    required: true
 
-jobs:
-  create-pull-request:
-    runs-on: ubuntu-latest
-    steps:
-      # Checkout the repository
-      - name: Checkout Code
-        uses: actions/checkout@v3
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
 
-      # Set up GitHub CLI to create the pull request
-      - name: Setup GitHub CLI
-        uses: actions/setup-node@v3
-        with:
-          node-version: '14'
+    - name: Authorize GitHub with PAT
+      run: |
+        echo "${{ inputs.secret }}" | gh auth login --with-token
+      shell: bash
 
-      # Create a new branch (auto-pr-branch)
-      - name: Create New Branch for Pull Request
-        run: |
-          git checkout -b auto-pr-branch
-          # Make some changes if needed
-          git commit --allow-empty -m "Prepare new changes for PR"
-          git push origin auto-pr-branch
-
-      # Authorize with GitHub using a personal access token (PAT) from secret
-      - name: Authorize with GitHub
-        env:
-          GITHUB_TOKEN: ${{ inputs.secret }}  # Using the custom PAT secret input here
-        run: |
-          echo "${{ inputs.secret }}" | gh auth login --with-token
-
-      # Create a pull request from the new branch to the main branch
-      - name: Create Pull Request
-        run: |
-          gh pr create --title "Auto PR from main branch merge" \
-                       --body "This is an automatically created pull request for merging recent changes." \
-                       --base main \
-                       --head auto-pr-branch
+    - name: Create Pull Request
+      run: |
+        gh pr create \
+          --repo ${{ inputs.repository }} \
+          --base ${{ inputs.base-branch }} \
+          --head ${{ inputs.head-branch }} \
+          --title "${{ inputs.pr-title }}" \
+          --body "${{ inputs.pr-body }}"
+      shell: bash
