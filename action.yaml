@@ -1,38 +1,20 @@
-name: "Create Pull Request Alert"
-author: "Your Name"
-description: "Automatically create a pull request with the main branch on new branch changes"
+name: 'Pull Request Action'
+description: 'A GitHub action to open a pull request'
+author: 'vsoch'
+runs:
+  using: 'docker'
+  image: 'Dockerfile'
 branding:
-  color: green
-  icon: git-pull-request
-permissions:
-  pull-requests: write  # Ensure write access for pull requests
-  contents: write       # Ensure write access to contents if needed
-
-on:
-  push:
-    branches:
-      - "**"  # Trigger on push to any branch except 'main'
-
-jobs:
-  create-pr-alert:
-    runs-on: ubuntu-latest
-    if: github.ref != 'refs/heads/main'  # Avoid creating PR when pushing to the main branch
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v3
-
-      - name: Create Pull Request via GitHub API
-        env:
-          GITHUB_TOKEN: ${{ github.token }}  # Use the GitHub Actions built-in token
-        run: |
-          curl -X POST \
-          -H "Authorization: token $GITHUB_TOKEN" \
-          -H "Accept: application/vnd.github.v3+json" \
-          https://api.github.com/repos/${{ github.repository }}/pulls \
-          -d '{
-            "title": "Automated Pull Request for changes from ${{ github.ref_name }}",
-            "head": "${{ github.ref_name }}",
-            "base": "main",
-            "body": "This is an automated pull request for merging changes from ${{ github.ref_name }} into the main branch."
-          }'
-        shell: bash
+  icon: 'activity'  
+  color: 'yellow'
+outputs:
+  pull_request_number:
+    description: 'If the pull request is opened, this is the number for it.'
+  pull_request_url:
+    description: 'If the pull request is opened, the html url for it.'
+  pull_request_return_code:
+    description: 'The pull request return code.'
+  assignees_return_code:
+    description: 'The add assignees post return code.'
+  reviewers_return_code:
+    description: 'The add reviewers post return code.'
