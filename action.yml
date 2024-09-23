@@ -24,7 +24,7 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Setup and Configure AWS CLI
+    - name: Setup and Configure AWS CLI Custom
       run: |
         python -m venv .venv
         source .venv/bin/activate
