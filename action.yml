@@ -1,4 +1,4 @@
-name: "Setup AWS CLI and Configure"
+name: "Setup AWS CLI and Configure Customized"
 author: "Sumanshu Nankana"
 description: "Setup AWS CLI to use in github actions"
 branding:
