@@ -21,9 +21,6 @@ inputs:
     description: "Body content of the pull request"
     required: false
     default: "This is an automated pull request"
-  github-token:
-    description: "GitHub Personal Access Token for authentication"
-    required: true
 
 runs:
   using: "composite"
@@ -33,7 +30,7 @@ runs:
 
     - name: Create Pull Request
       env:
-        GH_TOKEN: ${{ inputs.secret }}  # Directly setting the token in the environment
+        GH_TOKEN: ${{ github.token }}  # Use the built-in GitHub Actions token
       run: |
         gh pr create \
           --repo ${{ inputs.repository }} \
