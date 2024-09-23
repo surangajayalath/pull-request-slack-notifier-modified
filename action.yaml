@@ -1,47 +1,42 @@
-name: "Setup AWS CLI and Configure Customized"
-author: "Sumanshu Nankana"
-description: "Setup AWS CLI to use in github actions"
-branding:
-  color: blue
-  icon: activity
-inputs:
-  region:
-    description: "AWS Region"
-    required: true
-  access-key-id:
-    description: "AWS Access Key ID"
-    required: true
-  secret-access-key:
-    description: "AWS Secret Access Key"
-    required: true
-  aws-cli-version:
-    description: "AWS CLI Version to Install"
-    required: false
-    default: ""
-  output-format:
-    description: "AWS CLI output format"
-    required: false
-runs:
-  using: "composite"
-  steps:
-    - name: Setup and Configure AWS CLI Custom
-      run: |
-        python -m venv .venv
-        source .venv/bin/activate
-        # if aws-cli-version is empty string then install latest
-        if [ -z "${{ inputs.aws-cli-version }}" ]; then
-          pip install awscli
-        else
-          pip install awscli==${{ inputs.aws-cli-version }}
-        fi
-        aws configure set default.region ${{ inputs.region }}
-        aws configure set aws_access_key_id ${{ inputs.access-key-id }}
-        aws configure set aws_secret_access_key ${{ inputs.secret-access-key }}
-        # -n to check if following string is not empty
-        if [ -n "${{ inputs.output-format }}" ]; then
-          aws configure set default.output ${{ inputs.output-format }}
-        fi
-      shell: bash
-    - name: Check AWS CLI Version
-      run:  aws --version
-      shell: bash
+name: "Auto Create Pull Request on Main Branch Push"
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      # Checkout the repository
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # Set up GitHub CLI to create the pull request
+      - name: Setup GitHub CLI
+        uses: actions/setup-node@v3
+        with:
+          node-version: '14'
+
+      # Create a new branch (auto-pr-branch)
+      - name: Create New Branch for Pull Request
+        run: |
+          git checkout -b auto-pr-branch
+          # Make some changes if needed
+          git commit --allow-empty -m "Prepare new changes for PR"
+          git push origin auto-pr-branch
+
+      # Authorize with GitHub using a personal access token (PAT) from secret
+      - name: Authorize with GitHub
+        env:
+          GITHUB_TOKEN: ${{ inputs.secret }}  # Using the custom PAT secret input here
+        run: |
+          echo "${{ inputs.secret }}" | gh auth login --with-token
+
+      # Create a pull request from the new branch to the main branch
+      - name: Create Pull Request
+        run: |
+          gh pr create --title "Auto PR from main branch merge" \
+                       --body "This is an automatically created pull request for merging recent changes." \
+                       --base main \
+                       --head auto-pr-branch
