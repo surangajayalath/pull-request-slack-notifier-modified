@@ -31,12 +31,9 @@ runs:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
-    - name: Authorize GitHub with PAT
-      run: |
-        echo "${{ inputs.secret }}" | gh auth login --with-token
-      shell: bash
-
     - name: Create Pull Request
+      env:
+        GITHUB_TOKEN: ${{ inputs.secret }}  # Directly setting the token in the environment
       run: |
         gh pr create \
           --repo ${{ inputs.repository }} \
