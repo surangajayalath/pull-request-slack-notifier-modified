@@ -460,8 +460,8 @@ async function buildMessageContent(input: TInput): Promise<{
               },
               {
                 type: 'mrkdwn',
-                //text: `<${messageURL}>`,
-                text: `${messageURL} (<${messageURL}|Click here>)`,
+                text: `<${messageURL}>`,
+                //text: `${messageURL} (<${messageURL}|Click here>)`,
               },
             ],
           },
