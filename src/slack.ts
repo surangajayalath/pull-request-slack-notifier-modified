@@ -344,37 +344,59 @@ async function buildMessageContent(input: TInput): Promise<{
     },
   ];
 
+  let outputText = '';
+
   if (head) {
-    blocks.push({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `:small_blue_diamond: *Head branch:*  <${head.join('|')}>`,
-      },
-    });
+    outputText += `:small_blue_diamond: *From: <${head.join('|')}> branch*`;
   }
-
+  
   if (base) {
+    outputText += ` *to <${base.join('|')}> branch*`;
+  }
+  
+  // Push the combined output as a single section
+  if (outputText) {
     blocks.push({
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `:small_blue_diamond: *Base branch:*  <${base.join('|')}>`,
+        text: outputText,
       },
     });
   }
+  
 
-  if (changedFiles) {
-    blocks.push({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `:small_blue_diamond: *Files changed:*  <${changedFiles.join(
-          '|'
-        )}>`,
-      },
-    });
-  }
+  // if (head) {
+  //   blocks.push({
+  //     type: 'section',
+  //     text: {
+  //       type: 'mrkdwn',
+  //       text: `:small_blue_diamond: *Head branch:*  <${head.join('|')}>`,
+  //     },
+  //   });
+  // }
+
+  // if (base) {
+  //   blocks.push({
+  //     type: 'section',
+  //     text: {
+  //       type: 'mrkdwn',
+  //       text: `:small_blue_diamond: *Base branch:*  <${base.join('|')}>`,
+  //     },
+  //   });
+  // }
+
+  // if (changedFiles) {
+  //   blocks.push({
+  //     type: 'section',
+  //     text: {
+  //       type: 'mrkdwn',
+  //       text: `:small_blue_diamond: *Files changed:*  <${changedFiles.join(
+  //         '|'
+  //       )}>`,
+  //     },
+  //   });
+  // }
 
   if (labels.length > 0) {
     blocks.push({
@@ -400,18 +422,18 @@ async function buildMessageContent(input: TInput): Promise<{
     });
   }
 
-  if (createdBy) {
-    blocks.push({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `:technologist: *Created by:*  ${generateUser(
-          createdBy,
-          userMapping
-        )}`,
-      },
-    });
-  }
+  // if (createdBy) {
+  //   blocks.push({
+  //     type: 'section',
+  //     text: {
+  //       type: 'mrkdwn',
+  //       text: `:technologist: *Created by:*  ${generateUser(
+  //         createdBy,
+  //         userMapping
+  //       )}`,
+  //     },
+  //   });
+  // }
 
   blocks.push({ type: 'divider' });
 
@@ -438,7 +460,8 @@ async function buildMessageContent(input: TInput): Promise<{
               },
               {
                 type: 'mrkdwn',
-                text: `<${messageURL}>`,
+                text: `<${messageURL}| ${messageURL}>`,
+                //text: `${messageURL} (<${messageURL}|Click here>)`,
               },
             ],
           },
