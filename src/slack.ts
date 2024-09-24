@@ -422,18 +422,18 @@ async function buildMessageContent(input: TInput): Promise<{
     });
   }
 
-  if (createdBy) {
-    blocks.push({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `:technologist: *Created by:*  ${generateUser(
-          createdBy,
-          userMapping
-        )}`,
-      },
-    });
-  }
+  // if (createdBy) {
+  //   blocks.push({
+  //     type: 'section',
+  //     text: {
+  //       type: 'mrkdwn',
+  //       text: `:technologist: *Created by:*  ${generateUser(
+  //         createdBy,
+  //         userMapping
+  //       )}`,
+  //     },
+  //   });
+  // }
 
   blocks.push({ type: 'divider' });
 
