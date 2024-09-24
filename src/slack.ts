@@ -442,20 +442,6 @@ async function buildMessageContent(input: TInput): Promise<{
               },
             ],
           },
-          {
-            type: 'context',
-            elements: [
-              {
-                type: 'image',
-                image_url: 'https://github.githubassets.com/favicon.ico',
-                alt_text: 'github favicon',
-              },
-              {
-                type: 'mrkdwn',
-                text: 'From GitHub Action | Powered By <https://github.com/daint2git|daint2git>',
-              },
-            ],
-          },
         ],
       },
     ],
