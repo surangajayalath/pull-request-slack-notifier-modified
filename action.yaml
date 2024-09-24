@@ -1,34 +1,23 @@
-name: 'Pull Request Action'
-description: 'Automatically create a pull request on branch push and notify Slack'
+name: "Pull Request Action"
+description: "Create a pull request and send a Slack notification."
 inputs:
-  token:
-    description: 'GitHub token for creating the pull request'
+  GITHUB_TOKEN:
+    description: "GitHub Token for authentication."
     required: true
-  repository:
-    description: 'The GitHub repository to work with'
+  PULL_REQUEST_HEAD:
+    description: "The branch name of the head repository."
     required: true
-  base:
-    description: 'The base branch to target for the pull request'
-    required: true
-  head:
-    description: 'The head branch for the pull request'
-    required: true
-  slack_webhook_url:
-    description: 'Slack webhook URL to send PR notifications'
+  PULL_REQUEST_TITLE:
+    description: "Title of the pull request."
     required: false
-
+    default: "Automated Pull Request"
+  PULL_REQUEST_BODY:
+    description: "Body of the pull request."
+    required: false
+    default: "Please review the changes."
+  SLACK_WEBHOOK_URL:  # New input for Slack Webhook URL
+    description: "Slack Webhook URL for notifications."
+    required: true
 runs:
-  using: 'docker'
-  image: 'Dockerfile'
-  env:
-    SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook_url }}
-  args:
-    - ${{ inputs.token }}
-    - ${{ inputs.repository }}
-    - ${{ inputs.base }}
-    - ${{ inputs.head }}
-    - ${{ inputs.slack_webhook_url }}
-
-branding:
-  icon: 'git-pull-request'
-  color: 'green'
+  using: "docker"
+  image: "Dockerfile"

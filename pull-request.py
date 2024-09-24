@@ -9,7 +9,6 @@ import requests
 # Helper Functions
 ################################################################################
 
-
 def get_envar(name):
     """
     Given a name, return the corresponding environment variable. Exit if not
@@ -25,9 +24,7 @@ def get_envar(name):
 
 
 def check_events_json():
-    """the github events json is required in order to indicate that we are
-    in an action environment.
-    """
+    """The GitHub events JSON is required to indicate that we are in an action environment."""
     events = get_envar("GITHUB_EVENT_PATH")
     if not os.path.exists(events):
         sys.exit("Cannot find Github events file at ${GITHUB_EVENT_PATH}")
@@ -36,8 +33,7 @@ def check_events_json():
 
 
 def abort_if_fail(response, reason):
-    """If PASS_ON_ERROR, don't exit. Otherwise exit with an error and print
-    the reason.
+    """If PASS_ON_ERROR, don't exit. Otherwise exit with an error and print the reason.
 
     Parameters:
     response (requests.Response) : an unparsed response from requests
@@ -57,10 +53,10 @@ def abort_if_fail(response, reason):
 
 
 def parse_into_list(values):
-    """A list of reviewers or assignees to parse from a string to a list
+    """A list of reviewers or assignees to parse from a string to a list.
 
     Parameters:
-    values (str) : a list of space separated, quoted values to parse to a list
+    values (str) : a list of space-separated, quoted values to parse to a list
     """
     if values:
         values = values.replace('"', "").replace("'", "")
@@ -70,11 +66,11 @@ def parse_into_list(values):
 
 
 def set_env_and_output(name, value):
-    """helper function to echo a key/value pair to the environement file
+    """Helper function to echo a key/value pair to the environment file.
 
     Parameters:
     name (str)  : the name of the environment variable
-    value (str) : the value to write to file
+    value (str) : the value to write to the file
     """
     for env_var in ("GITHUB_ENV", "GITHUB_OUTPUT"):
         environment_file_path = os.environ.get(env_var)
@@ -88,8 +84,7 @@ def set_env_and_output(name, value):
 
 
 def open_pull_request(title, body, target, source, is_draft=False, can_modify=True):
-    """Open pull request opens a pull request with a given body and content,
-    and sets output variables. An unparsed response is returned.
+    """Open a pull request with a given body and content, and sets output variables.
 
     Parameters:
     title       (str) : the title to set for the new pull request
@@ -142,13 +137,13 @@ def update_pull_request(entry, title, body, target, state=None):
     print("Data for updating pull request: %s" % data)
     response = requests.patch(url, json=data, headers=HEADERS)
     if response.status_code != 200:
-        abort_if_fail(response, "Unable to create pull request")
+        abort_if_fail(response, "Unable to update pull request")
 
     return response
 
 
 def set_pull_request_groups(response):
-    """Given a response for an open or updated PR, set metadata
+    """Given a response for an open or updated PR, set metadata.
 
     Parameters:
     response (requests.Response) : a requests response, unparsed
@@ -170,8 +165,7 @@ def set_pull_request_groups(response):
 
 
 def list_pull_requests(target, source):
-    """Given a target and source, return a list of pull requests that match
-    (or simply exit given some kind of error code)
+    """Given a target and source, return a list of pull requests that match (or simply exit given some kind of error code).
 
     Parameters:
     target (str) : the target branch
@@ -192,11 +186,11 @@ def list_pull_requests(target, source):
 
 
 def add_assignees(entry, assignees):
-    """Given a pull request metadata (from create or update) add assignees
+    """Given a pull request metadata (from create or update) add assignees.
 
     Parameters:
     entry (dict)    : the pull request metadata
-    assignees (str) : comma separated assignees string set by action
+    assignees (str) : comma-separated assignees string set by action
     """
     # Remove leading and trailing quotes
     assignees = parse_into_list(assignees)
@@ -221,8 +215,7 @@ def add_assignees(entry, assignees):
 
 
 def find_pull_request(listing, source):
-    """Given a listing and a source, find a pull request based on the source
-    (the branch name).
+    """Given a listing and a source, find a pull request based on the source (the branch name).
 
     Parameters:
     listing (list) : the list of PR objects (dict) to parse over
@@ -251,249 +244,93 @@ def find_default_branch():
 
 
 def add_reviewers(entry, reviewers, team_reviewers):
-    """Given regular or team reviewers, add them to a PR.
+    """Given regular and team reviewers, add them to the pull request.
 
     Parameters:
-    entry (dict) : the pull request metadata
+    entry (dict)           : the pull request metadata
+    reviewers (str)        : reviewers to add
+    team_reviewers (str)   : team reviewers to add
     """
-    print("Found reviewers: %s and team reviewers: %s" % (reviewers, team_reviewers))
-    team_reviewers = parse_into_list(team_reviewers)
+    # Get the pull request number
+    number = entry.get("number")
+
+    # Get the reviewers
     reviewers = parse_into_list(reviewers)
-    print("Parsed reviewers: %s and team reviewers: %s" % (reviewers, team_reviewers))
+    team_reviewers = parse_into_list(team_reviewers)
+    print("Adding reviewers %s and teams %s to pull request number %s" % (reviewers, team_reviewers, number))
 
-    # POST /repos/:owner/:repo/pulls/:pull_number/requested_reviewers
-    REVIEWERS_URL = "%s/%s/requested_reviewers" % (PULLS_URL, entry.get("number"))
-
-    data = {"reviewers": reviewers, "team_reviewers": team_reviewers}
+    # Adding users
+    data = {"reviewers": reviewers}
+    REVIEWERS_URL = "%s/%s/requested_reviewers" % (PULLS_URL, number)
     response = requests.post(REVIEWERS_URL, json=data, headers=HEADERS)
     if response.status_code != 201:
-        abort_if_fail(response, "Unable to assign reviewers")
-    reviewers_return_code = 0 if response.status_code == 201 else response.status_code
+        abort_if_fail(response, "Unable to add reviewers")
 
-    print("::group::github reviewers response")
-    print(response.json())
-    print("::endgroup::github reviewers response")
-    set_env_and_output("REVIEWERS_RETURN_CODE", reviewers_return_code)
+    # Adding teams
+    if team_reviewers:
+        data = {"team_reviewers": team_reviewers}
+        TEAM_REVIEWERS_URL = "%s/%s/requested_teams" % (PULLS_URL, number)
+        response = requests.post(TEAM_REVIEWERS_URL, json=data, headers=HEADERS)
+        if response.status_code != 201:
+            abort_if_fail(response, "Unable to add team reviewers")
 
+    print("Added reviewers and teams to the pull request!")
 
-################################################################################
-# Global Variables (we can't use GITHUB_ prefix)
-################################################################################
-
-API_VERSION = "v3"
-
-# Allow for a GitHub enterprise URL
-BASE = os.environ.get("GITHUB_API_URL") or "https://api.github.com"
-
-PR_TOKEN = os.environ.get("PULL_REQUEST_TOKEN") or get_envar("GITHUB_TOKEN")
-PR_REPO = os.environ.get("PULL_REQUEST_REPOSITORY") or get_envar("GITHUB_REPOSITORY")
-
-HEADERS = {
-    "Authorization": "token %s" % PR_TOKEN,
-    "Accept": "application/vnd.github.%s+json;application/vnd.github.antiope-preview+json;application/vnd.github.shadow-cat-preview+json"
-    % API_VERSION,
-}
-
-# URLs
-REPO_URL = "%s/repos/%s" % (BASE, PR_REPO)
-ISSUE_URL = "%s/issues" % REPO_URL
-PULLS_URL = "%s/pulls" % REPO_URL
-
-
-def create_pull_request(
-    source,
-    target,
-    body,
-    title,
-    assignees,
-    reviewers,
-    team_reviewers,
-    is_draft=False,
-    can_modify=True,
-    state="open",
-):
-    """Create pull request is the base function that determines if the PR exists,
-    and then updates or creates it depending on user preferences.
-    """
-    listing = list_pull_requests(target, source)
-
-    # Determine if the pull request is already open
-    entry = find_pull_request(listing, source)
-    response = None
-
-    # Case 1: we found the PR, the user wants to pass
-    if entry and os.environ.get("PASS_IF_EXISTS"):
-        print("PASS_IF_EXISTS is set, exiting with success status.")
-        sys.exit(0)
-
-    # Does the user want to update the existing PR?
-    if entry and os.environ.get("PULL_REQUEST_UPDATE"):
-        response = update_pull_request(entry, title, body, target, state)
-        set_pull_request_groups(response)
-
-    # If it's not open, we open a new pull request
-    elif not entry:
-        response = open_pull_request(title, body, target, source, is_draft, can_modify)
-        set_pull_request_groups(response)
-
-    # If we have a response, parse into json (no longer need retvals)
-    response = response.json() if response else None
-
-    # If we have opened or updated, we can add assignees
-    if response and assignees:
-        add_assignees(response, assignees)
-    if response and (reviewers or team_reviewers):
-        add_reviewers(response, reviewers, team_reviewers)
-
-#################
-def send_slack_notification(pr_url, slack_webhook_url):
-    message = {
-        "text": f"Pull Request created: {pr_url}"
-    }
-    response = requests.post(slack_webhook_url, json=message)
-    if response.status_code != 200:
-        raise ValueError(f"Request to Slack returned an error {response.status_code}, the response is:\n{response.text}")
-#################
 
 def main():
-    """main primarily parses environment variables to prepare for creation"""
+    """Main entry point for script."""
+    # 1. Get envars and initialize constants
+    GITHUB_TOKEN = get_envar("GITHUB_TOKEN")
+    GITHUB_REPOSITORY = get_envar("GITHUB_REPOSITORY")
+    PULL_REQUEST_TITLE = get_envar("PULL_REQUEST_TITLE")
+    PULL_REQUEST_BODY = get_envar("PULL_REQUEST_BODY")
+    PULL_REQUEST_TARGET = get_envar("PULL_REQUEST_TARGET")
+    PULL_REQUEST_SOURCE = get_envar("PULL_REQUEST_SOURCE")
+    PULL_REQUEST_DRAFT = os.environ.get("PULL_REQUEST_DRAFT", "").lower() in ["true", "1", "yes"]
+    PULL_REQUEST_UPDATE = os.environ.get("PULL_REQUEST_UPDATE")
+    ASSIGNEES = os.environ.get("ASSIGNEES")
+    REVIEWERS = os.environ.get("REVIEWERS")
+    TEAM_REVIEWERS = os.environ.get("TEAM_REVIEWERS")
 
-    # path to file that contains the POST response of the event
-    # Example: https://github.com/actions/bin/tree/master/debug
-    # Value: /github/workflow/event.json
+    # Set headers for GitHub API requests
+    global HEADERS
+    HEADERS = {"Authorization": f"token {GITHUB_TOKEN}"}
+
+    # Set the repo URL and pulls URL for the requests
+    global REPO_URL, PULLS_URL, ISSUE_URL
+    REPO_URL = f"https://api.github.com/repos/{GITHUB_REPOSITORY}"
+    PULLS_URL = f"{REPO_URL}/pulls"
+    ISSUE_URL = f"{REPO_URL}/issues"
+
+    # Check events JSON
     check_events_json()
 
-    branch_prefix = os.environ.get("BRANCH_PREFIX", "")
-    print("Branch prefix is %s" % branch_prefix)
-    if not branch_prefix:
-        print("No branch prefix is set, all branches will be used.")
+    # 2. Check for an existing PR
+    existing_pr = list_pull_requests(PULL_REQUEST_TARGET, PULL_REQUEST_SOURCE)
+    entry = find_pull_request(existing_pr, PULL_REQUEST_SOURCE)
 
-    # Default to project default branch if none provided
-    pull_request_branch = os.environ.get("PULL_REQUEST_BRANCH")
-    if not pull_request_branch:
-        pull_request_branch = find_default_branch()
+    if entry:
+        # If the pull request already exists and we want to update it
+        if PULL_REQUEST_UPDATE:
+            response = update_pull_request(entry, PULL_REQUEST_TITLE, PULL_REQUEST_BODY, PULL_REQUEST_TARGET)
+            set_pull_request_groups(response)
+            print("Updated existing pull request.")
+            if ASSIGNEES:
+                add_assignees(entry, ASSIGNEES)
+            if REVIEWERS or TEAM_REVIEWERS:
+                add_reviewers(entry, REVIEWERS, TEAM_REVIEWERS)
+            return
 
-    print("Pull requests will go to %s" % pull_request_branch)
+    # 3. Create a new pull request if not updating
+    response = open_pull_request(PULL_REQUEST_TITLE, PULL_REQUEST_BODY, PULL_REQUEST_TARGET, PULL_REQUEST_SOURCE, PULL_REQUEST_DRAFT)
+    set_pull_request_groups(response)
 
-    # Pull request draft
-    pull_request_draft = os.environ.get("PULL_REQUEST_DRAFT")
-    if not pull_request_draft:
-        print("No explicit preference for draft PR: created PRs will be normal PRs.")
-        pull_request_draft = False
-    else:
-        print("PULL_REQUEST_DRAFT set to a value: created PRs will be draft PRs.")
-        pull_request_draft = True
-
-    # If an update is true, we can change the state
-    pull_request_state = os.environ.get("PULL_REQUEST_STATE", "open")
-    if pull_request_state not in ["open", "closed"]:
-        sys.exit("State is required to be one of 'open' or 'closed'")
-
-    # Maintainer can modify, defaults to CAN, unless user sets MAINTAINER_CANT_MODIFY
-    maintainer_can_modify = os.environ.get("MAINTAINER_CANT_MODIFY")
-    if not maintainer_can_modify:
-        print("No preference for maintainer being able to modify: default is true.")
-        maintainer_can_modify = True
-    else:
-        print(
-            "MAINTAINER_CANT_MODIFY set to a value: maintainer will not be able to modify."
-        )
-        maintainer_can_modify = False
-
-    # Assignees
-    assignees = os.environ.get("PULL_REQUEST_ASSIGNEES")
-    if not assignees:
-        print("PULL_REQUEST_ASSIGNEES is not set, no assignees.")
-    else:
-        print("PULL_REQUEST_ASSIGNEES is set, %s" % assignees)
-
-    # Reviewers (individual and team)
-
-    reviewers = os.environ.get("PULL_REQUEST_REVIEWERS")
-    team_reviewers = os.environ.get("PULL_REQUEST_TEAM_REVIEWERS")
-    if not reviewers:
-        print("PULL_REQUEST_REVIEWERS is not set, no reviewers.")
-    else:
-        print("PULL_REQUEST_REVIEWERS is set, %s" % reviewers)
-
-    if not team_reviewers:
-        print("PULL_REQUEST_TEAM_REVIEWERS is not set, no team reviewers.")
-    else:
-        print("PULL_REQUEST_TEAM_REVIEWERS is set, %s" % team_reviewers)
-
-    # The user is allowed to explicitly set the name of the branch
-    from_branch = os.environ.get("PULL_REQUEST_FROM_BRANCH")
-    if not from_branch:
-        print("PULL_REQUEST_FROM_BRANCH is not set, checking branch in payload.")
-        with open(check_events_json(), "r") as fd:
-            from_branch = json.loads(fd.read()).get("ref", "")
-        from_branch = from_branch.replace("refs/heads/", "").strip("/")
-    else:
-        print("PULL_REQUEST_FROM_BRANCH is set.")
-
-    # At this point, we must have a branch
-    if from_branch:
-        print("Found branch %s to open PR from" % from_branch)
-    else:
-        sys.exit(
-            "You are required to define PULL_REQUEST_FROM_BRANCH in the environment."
-        )
-
-    # If it's to the target branch, ignore it
-    if from_branch == pull_request_branch:
-        print("Target and current branch are identical (%s), skipping." % from_branch)
-        sys.exit(0)
-
-    # If the prefix for the branch matches
-    if not branch_prefix or from_branch.startswith(branch_prefix):
-
-        # Pull request body (optional)
-        pull_request_body = os.environ.get(
-            "PULL_REQUEST_BODY",
-            "This is an automated pull request to update from branch %s" % from_branch,
-        )
-
-        print("::group::pull request body")
-        print(pull_request_body)
-        print("::endgroup::pull request body")
-
-        # Pull request title (optional)
-        pull_request_title = os.environ.get(
-            "PULL_REQUEST_TITLE", "Update from %s" % from_branch
-        )
-        print("::group::pull request title")
-        print(pull_request_title)
-        print("::endgroup::pull request title")
-
-        # Create the pull request
-        create_pull_request(
-            target=pull_request_branch,
-            source=from_branch,
-            body=pull_request_body,
-            title=pull_request_title,
-            is_draft=pull_request_draft,
-            can_modify=maintainer_can_modify,
-            assignees=assignees,
-            reviewers=reviewers,
-            team_reviewers=team_reviewers,
-            state=pull_request_state,
-        )
-
-###############
-    pr_url = create_pull_request()  # Assuming this returns the PR URL
-    
-    # Send PR URL to Slack
-    slack_webhook_url = os.getenv('SLACK_WEBHOOK_URL')
-    if slack_webhook_url:
-        send_slack_notification(pr_url, slack_webhook_url)
-    else:
-        print("Slack webhook URL is not set.")
-##############
+    # 4. Add assignees and reviewers to the newly created pull request
+    if ASSIGNEES:
+        add_assignees(response.json(), ASSIGNEES)
+    if REVIEWERS or TEAM_REVIEWERS:
+        add_reviewers(response.json(), REVIEWERS, TEAM_REVIEWERS)
 
 
 if __name__ == "__main__":
-    print("==========================================================================")
-    print("START: Running Pull Request on Branch Update Action!")
     main()
-    print("==========================================================================")
-    print("END: Finished")
