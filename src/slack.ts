@@ -347,7 +347,7 @@ async function buildMessageContent(input: TInput): Promise<{
   let outputText = '';
 
   if (head) {
-    outputText += `:small_blue_diamond: *From:  <${head.join('|')}> branch*`;
+    outputText += `:small_blue_diamond: *From: <${head.join('|')}> branch*`;
   }
   
   if (base) {
