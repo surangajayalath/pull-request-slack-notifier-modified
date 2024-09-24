@@ -345,6 +345,15 @@ def create_pull_request(
     if response and (reviewers or team_reviewers):
         add_reviewers(response, reviewers, team_reviewers)
 
+#################
+def send_slack_notification(pr_url, slack_webhook_url):
+    message = {
+        "text": f"Pull Request created: {pr_url}"
+    }
+    response = requests.post(slack_webhook_url, json=message)
+    if response.status_code != 200:
+        raise ValueError(f"Request to Slack returned an error {response.status_code}, the response is:\n{response.text}")
+#################
 
 def main():
     """main primarily parses environment variables to prepare for creation"""
@@ -470,21 +479,16 @@ def main():
             state=pull_request_state,
         )
 
-def send_slack_notification(pr_url):
-    """Send a notification to Slack with the pull request URL."""
-    slack_webhook_url = os.environ.get("SLACK_WEBHOOK_URL")
-    if not slack_webhook_url:
-        print("SLACK_WEBHOOK_URL is not set, skipping Slack notification.")
-        return
-
-    message = {
-        "text": f"A new pull request has been created: {pr_url}"
-    }
-    response = requests.post(slack_webhook_url, json=message)
-    if response.status_code != 200:
-        print(f"Failed to send Slack notification: {response.status_code} {response.text}")
+###############
+    pr_url = create_pull_request()  # Assuming this returns the PR URL
+    
+    # Send PR URL to Slack
+    slack_webhook_url = os.getenv('SLACK_WEBHOOK_URL')
+    if slack_webhook_url:
+        send_slack_notification(pr_url, slack_webhook_url)
     else:
-        print("Slack notification sent successfully.")
+        print("Slack webhook URL is not set.")
+##############
 
 
 if __name__ == "__main__":
