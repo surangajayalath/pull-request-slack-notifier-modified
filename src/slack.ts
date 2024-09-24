@@ -344,37 +344,59 @@ async function buildMessageContent(input: TInput): Promise<{
     },
   ];
 
+  let outputText = '';
+
   if (head) {
-    blocks.push({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `:small_blue_diamond: *Head branch:*  <${head.join('|')}>`,
-      },
-    });
+    outputText += `:small_blue_diamond: *Head branch:*  <${head.join('|')}>`;
   }
-
+  
   if (base) {
+    outputText += ` --> :small_blue_diamond: *Base branch:*  <${base.join('|')}>`;
+  }
+  
+  // Push the combined output as a single section
+  if (outputText) {
     blocks.push({
       type: 'section',
       text: {
         type: 'mrkdwn',
-        text: `:small_blue_diamond: *Base branch:*  <${base.join('|')}>`,
+        text: outputText,
       },
     });
   }
+  
 
-  if (changedFiles) {
-    blocks.push({
-      type: 'section',
-      text: {
-        type: 'mrkdwn',
-        text: `:small_blue_diamond: *Files changed:*  <${changedFiles.join(
-          '|'
-        )}>`,
-      },
-    });
-  }
+  // if (head) {
+  //   blocks.push({
+  //     type: 'section',
+  //     text: {
+  //       type: 'mrkdwn',
+  //       text: `:small_blue_diamond: *Head branch:*  <${head.join('|')}>`,
+  //     },
+  //   });
+  // }
+
+  // if (base) {
+  //   blocks.push({
+  //     type: 'section',
+  //     text: {
+  //       type: 'mrkdwn',
+  //       text: `:small_blue_diamond: *Base branch:*  <${base.join('|')}>`,
+  //     },
+  //   });
+  // }
+
+  // if (changedFiles) {
+  //   blocks.push({
+  //     type: 'section',
+  //     text: {
+  //       type: 'mrkdwn',
+  //       text: `:small_blue_diamond: *Files changed:*  <${changedFiles.join(
+  //         '|'
+  //       )}>`,
+  //     },
+  //   });
+  // }
 
   if (labels.length > 0) {
     blocks.push({
