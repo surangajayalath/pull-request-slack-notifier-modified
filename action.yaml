@@ -1,20 +1,34 @@
 name: 'Pull Request Action'
-description: 'A GitHub action to open a pull request'
-author: 'vsoch'
+description: 'Automatically create a pull request on branch push and notify Slack'
+inputs:
+  token:
+    description: 'GitHub token for creating the pull request'
+    required: true
+  repository:
+    description: 'The GitHub repository to work with'
+    required: true
+  base:
+    description: 'The base branch to target for the pull request'
+    required: true
+  head:
+    description: 'The head branch for the pull request'
+    required: true
+  slack_webhook_url:
+    description: 'Slack webhook URL to send PR notifications'
+    required: false
+
 runs:
   using: 'docker'
   image: 'Dockerfile'
+  env:
+    SLACK_WEBHOOK_URL: ${{ inputs.slack_webhook_url }}
+  args:
+    - ${{ inputs.token }}
+    - ${{ inputs.repository }}
+    - ${{ inputs.base }}
+    - ${{ inputs.head }}
+    - ${{ inputs.slack_webhook_url }}
+
 branding:
-  icon: 'activity'  
-  color: 'yellow'
-outputs:
-  pull_request_number:
-    description: 'If the pull request is opened, this is the number for it.'
-  pull_request_url:
-    description: 'If the pull request is opened, the html url for it.'
-  pull_request_return_code:
-    description: 'The pull request return code.'
-  assignees_return_code:
-    description: 'The add assignees post return code.'
-  reviewers_return_code:
-    description: 'The add reviewers post return code.'
+  icon: 'git-pull-request'
+  color: 'green'
