@@ -19,7 +19,7 @@ def get_envar(name):
     """
     value = os.environ.get(name)
     if not value:
-        sys.exit("%s is required for vsoch/pull-request-action" % name)
+        sys.exit("%s is required for surangajayalath/pull-request-slack-notifier-modified@v3" % name)
     return value
 
 
