@@ -1,4 +1,4 @@
-name: 'Pull Request Slack Notifier'
+name: 'Pull Request Slack Notifier Custom'
 description: 'Sends a message to a Slack channel when an event occurs on a pull request'
 author: 'daint2git'
 branding:
